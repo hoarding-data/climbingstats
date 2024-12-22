@@ -1,25 +1,27 @@
-import requests, json, sys
+import requests, json, sys, time
 
 class Scraper:
 
-    API_BASE_URL = "https://components.ifsc-climbing.org/results-api.php?api="
+    API_BASE_URL = "https://ifsc.results.info"
 
     headers = {
-    'authority': 'components.ifsc-climbing.org',
-    'accept': '*/*',
-    'accept-language': 'en,en-US;q=0.9,sv-SE;q=0.8,sv;q=0.7,fi;q=0.6,ru;q=0.5',
-    'cookie': 'OptanonAlertBoxClosed=2022-06-11T12:13:56.319Z; OptanonConsent=isGpcEnabled=0&datestamp=Thu+Jul+07+2022+04%3A24%3A43+GMT%2B0200+(Central+European+Summer+Time)&version=6.20.0&isIABGlobal=false&consentId=04f2b45f-8dc3-41e4-a7d0-5a7e16f98626&interactionCount=1&landingPath=NotLandingPage&groups=C0001%3A0%2CC0002%3A0%2CC0003%3A0%2CC0004%3A0&hosts=H7%3A0%2CH1%3A0%2CH2%3A0%2CH13%3A0%2CH11%3A0%2CH14%3A0%2CH9%3A0%2CH3%3A0%2CH4%3A0%2CH10%3A0%2CH12%3A0%2CH5%3A0&genVendors=V5%3A0%2C&geolocation=US%3BVA&AwaitingReconsent=false',
-    'dnt': '1',
-    'referer': 'https://components.ifsc-climbing.org/results/',
-    'sec-ch-ua': '" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
-    'sec-ch-ua-mobile': '?0',
-    'sec-ch-ua-platform': '"Windows"',
-    'sec-fetch-dest': 'empty',
-    'sec-fetch-mode': 'cors',
-    'sec-fetch-site': 'same-origin',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36',
-    'x-requested-with': 'XMLHttpRequest'
-    }
+  'accept': 'application/json',
+  'accept-language': 'en-US,en;q=0.9',
+  'cache-control': 'no-cache',
+  'cookie': '_verticallife_resultservice_session=zheXgc6%2FjPjG2ebybpMtUVSGf2MGC9PRsY6TIADtdV74TiAm6KU1O2SeiEb4h8C%2BT2mh01k73VytpREwy1%2BDo%2BUR9%2BhVwU2g0Gh%2BqgNsfw%2FafM3ovifIPbU04UEu9n7bIyjgZgLyrtx7ciCm%2F%2FanXK%2BXkZ6482sKp5fvNzPF7JEPNaISsTTLYP5VXZ%2FR4ensulCA8qQfYgagOw6fLSdIPvu0Lvnn%2FCcLVOTWiHYIfOXgY2xhi1q%2F%2BAjrma6NjR02KCs0aDh%2FadRFJY%2FIwI3qafaiUVTI7H5%2BG5uHRyGAv8W%2FW9ohmBiJUUiSxQ%3D%3D--%2FFrvwitJkWGVg%2B9x--xyeTQtV3WYaZ1NAuTLaD5w%3D%3D',
+  'pragma': 'no-cache',
+  'priority': 'u=1, i',
+  'referer': 'https://ifsc.results.info/',
+  'sec-ch-ua': '"Brave";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
+  'sec-ch-ua-mobile': '?0',
+  'sec-ch-ua-platform': '"Linux"',
+  'sec-fetch-dest': 'empty',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-site': 'same-origin',
+  'sec-gpc': '1',
+  'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+  'x-csrf-token': 'IGS8KOAFGc5GfBD9EBzxNueSxkBs_VOqGdiHE1AZwtj91HzF-tMOh-JgH_CiO5Z4z9g7juCecEnOVAr8_kiJ2g'
+}
 
     def __init__(self):
 
@@ -27,7 +29,7 @@ class Scraper:
 
     def get_data(self, period='all') -> None:
 
-        season_info_url = self.API_BASE_URL + 'index'
+        season_info_url = self.API_BASE_URL + '/api/v1'
         seasons = requests.get(season_info_url, headers=self.headers).json()['seasons']
         seasons = {int(season['name']): season for season in seasons}
         
@@ -45,11 +47,10 @@ class Scraper:
         print("Scraping data...\n")
         
         for year in years:
-            
+            time.sleep(2)
             print(f"{year}:")
             season = seasons[year]
-            season_id = season['id']
-            league_id = season['leagues'][0]['id'] # pick only World Cup and World Champ data
+            league_id = season['leagues'][0]['id'] # pick only World Cup and World Champ data, assumes first entry is always world cups and world championships
             season['leagues'] = 'World Cups and World Championships'
             season['events'] = self.get_season_data(league_id)
         
@@ -60,19 +61,23 @@ class Scraper:
         print(f"Scraping...")
 
         # request event data
-        league_info_url = f"{self.API_BASE_URL}season_leagues_results&league={league_id}"
-        events = requests.get(league_info_url).json()['events']
+        league_info_url = f"{self.API_BASE_URL}/api/v1/season_leagues/{league_id}"
+        print(league_info_url)
+        events = requests.get(league_info_url,headers=self.headers).json()
+
+        events = events['events']
         
         # get data for each event in season
         event_list = []
         for event in events:
-
-            event_id = event['url'].split('/')[-1]
+            #event id is its own attribute now
+            event_id = event['event_id']
 
             try:
                 print(f" {event['event']}")
                 event_data = self.get_event_data(event_id)
-            except:
+            except Exception as e:
+                print(e)
                 print(f" Could not scrape {event['event']}")
                 continue
 
@@ -83,7 +88,6 @@ class Scraper:
         locations = [self.get_location(event) for event in event_list]
         counts = dict.fromkeys(locations, 0)
         for event in event_list:
-
             location = self.get_location(event)
 
             # check for repeated events in the same location and number them
@@ -98,19 +102,18 @@ class Scraper:
     def get_event_data(self, event_id: int) -> dict:
         
         # request category data
-        event_info_url = f"{self.API_BASE_URL}event_results&event_id={event_id}"
+        event_info_url = f"{self.API_BASE_URL}/api/v1/events/{event_id}"
+        print(event_info_url)
         event = requests.get(event_info_url, headers=self.headers).json()
         
         # scrape data for each category in event
         event['categories'] = []
         event['results'] = {}
         for category in event['d_cats']:
-
             category_name = category['dcat_name']
             event['categories'].append(category_name)
             print(f"  {category_name}")
-            discipline_id = int(category['full_results_url'].split('/')[-1])
-            category_results_url = f"{self.API_BASE_URL}event_full_results&result_url=/api/v1/events/{event_id}/result/{discipline_id}"
+            category_results_url = f"{self.API_BASE_URL}{category['full_results_url']}"
             category_results = requests.get(category_results_url, headers=self.headers).json()
             event['results'][category_name] = category_results['ranking']
 
