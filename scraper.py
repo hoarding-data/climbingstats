@@ -46,15 +46,15 @@ class Scraper:
         
         print("Scraping data...\n")
         
+        self.data = {}
         for year in years:
-            time.sleep(2)
             print(f"{year}:")
             season = seasons[year]
             league_id = season['leagues'][0]['id'] # pick only World Cup and World Champ data, assumes first entry is always world cups and world championships
             season['leagues'] = 'World Cups and World Championships'
             season['events'] = self.get_season_data(league_id)
-        
-        self.data = seasons
+            self.data[year] = season
+            self.to_json(year)
 
     def get_season_data(self, league_id: int) -> dict:
 
@@ -123,20 +123,21 @@ class Scraper:
     def get_location(self, event: dict) -> str:
         return ' '.join(event['name'].split('-')[-1].strip().split()[:-2])
 
-    def to_json(self, filename: str='data.json') -> None:
+    def to_json(self, year: int) -> None:
 
-        if not self.data:
-            print("No data. Run the get_data(period) method to scrape data.")
+        if not self.data or year not in self.data:
+            print(f"No data for {year}. Run the get_data(period) method to scrape data.")
             return 
         
-        print(f"Saving data to {filename}...")
+        filename = f"data_{year}.json"
+        print(f"Saving data for {year} to {filename}...")
         with open(filename, 'w+') as f:
-            json.dump(self.data, f, indent=4)
+            json.dump(self.data[year], f, indent=4)
         print("Done!")
 
 def usage() -> None:
 
-    print("Usage: 'python scraper.py' to scrape all data.\n       'python scraper.py -p <year>' to scraper a single season.\n       'python scraper.py -p <start_year> <end_year>' to scrape a range of years.")
+    print("Usage: 'python scraper.py' to scrape all data.\n       'python scraper.py -p <year>' to scrape a single season.\n       'python scraper.py -p <start_year> <end_year>' to scrape a range of years.")
 
 def main() -> None:
 
@@ -159,7 +160,6 @@ def main() -> None:
 
     scraper = Scraper()
     scraper.get_data(period)
-    scraper.to_json()
 
 if __name__ == '__main__':
 
