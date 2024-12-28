@@ -8,3 +8,9 @@ https://stanrusak.github.io/climbingstats/
 The data can be found in the `data` folder. `full_data.zip` contains the full data of IFSC World Cup/World Champs events, including boulder, lead, and speed (in JSON format).
 
 `men_2008-2023.csv` and `women_2008-2023.csv` contain corresponding athlete data. `climbingstats.py` has some helpful data structures for events and athletes. See the [Jupyter notebook](https://github.com/stanrusak/climbingstats/blob/main/bouldering.ipynb) for usage. 
+
+### TODO:
+
+- deal with case sensitivity
+- disciplines and sex appear to be constant currently so place those in a config instead of having them hardcoded everywhere
+- need to add boulder & lead
