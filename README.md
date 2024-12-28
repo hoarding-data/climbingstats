@@ -14,3 +14,21 @@ The data can be found in the `data` folder. `full_data.zip` contains the full da
 - deal with case sensitivity
 - disciplines and sex appear to be constant currently so place those in a config instead of having them hardcoded everywhere
 - need to add boulder & lead
+
+### Data considerations:
+
+- The combined disciplines are found in data years 2009, 2011, 2018, 2019, and 2021. However in 2009 and 2011 there is no actual event data/athlete scores.
+
+### Bugs
+unicode characters. (not really a bug i guess but maybe find better ways to display or something?)
+
+weird scores:
+Adam Ondra
+2016 Paris LEAD Men
+{'category_round_id': 3902, 'round_name': 'Qualification', 'score': '1. [3.46]', 'ascents': []}
+Ievgeniia Kazbekova
+2016 Villars LEAD Women
+{'category_round_id': 3856, 'round_name': 'Qualification', 'score': '0  |  0 [51.00]', 'ascents': []}
+Jakob Schubert
+2012 Paris LEAD Men
+{'category_round_id': 2119, 'round_name': 'Qualification', 'score': '4.183 ', 'ascents': []}
