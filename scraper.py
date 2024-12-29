@@ -1,36 +1,17 @@
 import requests, json, sys, time
+import ifsc_api as ifsc
 
 class Scraper:
-
-    API_BASE_URL = "https://ifsc.results.info"
-
-    headers = {
-  'accept': 'application/json',
-  'accept-language': 'en-US,en;q=0.9',
-  'cache-control': 'no-cache',
-  'cookie': '_verticallife_resultservice_session=zheXgc6%2FjPjG2ebybpMtUVSGf2MGC9PRsY6TIADtdV74TiAm6KU1O2SeiEb4h8C%2BT2mh01k73VytpREwy1%2BDo%2BUR9%2BhVwU2g0Gh%2BqgNsfw%2FafM3ovifIPbU04UEu9n7bIyjgZgLyrtx7ciCm%2F%2FanXK%2BXkZ6482sKp5fvNzPF7JEPNaISsTTLYP5VXZ%2FR4ensulCA8qQfYgagOw6fLSdIPvu0Lvnn%2FCcLVOTWiHYIfOXgY2xhi1q%2F%2BAjrma6NjR02KCs0aDh%2FadRFJY%2FIwI3qafaiUVTI7H5%2BG5uHRyGAv8W%2FW9ohmBiJUUiSxQ%3D%3D--%2FFrvwitJkWGVg%2B9x--xyeTQtV3WYaZ1NAuTLaD5w%3D%3D',
-  'pragma': 'no-cache',
-  'priority': 'u=1, i',
-  'referer': 'https://ifsc.results.info/',
-  'sec-ch-ua': '"Brave";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
-  'sec-ch-ua-mobile': '?0',
-  'sec-ch-ua-platform': '"Linux"',
-  'sec-fetch-dest': 'empty',
-  'sec-fetch-mode': 'cors',
-  'sec-fetch-site': 'same-origin',
-  'sec-gpc': '1',
-  'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
-  'x-csrf-token': 'IGS8KOAFGc5GfBD9EBzxNueSxkBs_VOqGdiHE1AZwtj91HzF-tMOh-JgH_CiO5Z4z9g7juCecEnOVAr8_kiJ2g'
-}
 
     def __init__(self):
 
         self.data = None
 
     def get_data(self, period='all') -> None:
-
-        season_info_url = self.API_BASE_URL + '/api/v1'
-        seasons = requests.get(season_info_url, headers=self.headers).json()['seasons']
+        """
+        Highest level. request from https://ifsc.results.info/api/v1
+        """
+        seasons = ifsc.fetch_seasons()
         seasons = {int(season['name']): season for season in seasons}
         
         if period == 'all':
@@ -51,7 +32,7 @@ class Scraper:
             print(f"{year}:")
             season = seasons[year]
             league_id = season['leagues'][0]['id'] # pick only World Cup and World Champ data, assumes first entry is always world cups and world championships
-            season['leagues'] = 'World Cups and World Championships'
+            season['leagues'] = 'World Cups and World Championships' #this doesn't get used
             season['events'] = self.get_season_data(league_id)
             self.data[year] = season
             self.to_json(year)
@@ -60,12 +41,8 @@ class Scraper:
 
         print(f"Scraping...")
 
-        # request event data
-        league_info_url = f"{self.API_BASE_URL}/api/v1/season_leagues/{league_id}"
-        print(league_info_url)
-        events = requests.get(league_info_url,headers=self.headers).json()
-
-        events = events['events']
+        # request event data for requeseted league
+        events = ifsc.fetch_league_events(league_id)
         
         # get data for each event in season
         event_list = []
@@ -102,9 +79,7 @@ class Scraper:
     def get_event_data(self, event_id: int) -> dict:
         
         # request category data
-        event_info_url = f"{self.API_BASE_URL}/api/v1/events/{event_id}"
-        print(event_info_url)
-        event = requests.get(event_info_url, headers=self.headers).json()
+        event = ifsc.fetch_event_details(event_id)
         
         # scrape data for each category in event
         event['categories'] = []
@@ -113,10 +88,10 @@ class Scraper:
             category_name = category['dcat_name']
             event['categories'].append(category_name)
             print(f"  {category_name}")
-            category_results_url = f"{self.API_BASE_URL}{category['full_results_url']}"
-            category_results = requests.get(category_results_url, headers=self.headers).json()
+            category_results = ifsc.fetch_category_results(category['full_results_url'])
             event['results'][category_name] = category_results['ranking']
 
+        #TODO delete "dcats" also? or was this one getting deleted because of duplication?
         del event['d_cats']
         return event
 

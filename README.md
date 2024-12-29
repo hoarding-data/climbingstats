@@ -18,6 +18,8 @@ The data can be found in the `data` folder. `full_data.zip` contains the full da
 ### Data considerations:
 
 - The combined disciplines are found in data years 2009, 2011, 2018, 2019, and 2021. However in 2009 and 2011 there is no actual event data/athlete scores.
+- boulder and lead starts in 2022 no boulder&lead in 2024 (probably b/c olympics?)
+- the "rounds" array (part of the events.results) starts getting populated in 2007 (to show the athletes performance in each round, not just their overall ranking) this also means there is no context for their score/ranking pre 2007.
 
 ### Bugs
 unicode characters. (not really a bug i guess but maybe find better ways to display or something?)
